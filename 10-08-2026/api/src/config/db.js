@@ -1,20 +1,32 @@
-import pg from 'pg'
-const { Pool } = pg
- 
-const pool = new Pool()
-      host:  process.env.DB_HOST,
-      password: process.env.DB_PASS, 
-      database: process.env.DB_NAME, 
-      user:  process.env.DB_USER
- 
-// the pool will emit an error on behalf of any idle clients
-// it contains if a backend error or network partition happens
-pool.on('error', (err, client) => {
-  console.error('Unexpected error on idle client', err)
-  process.exit(-1)
-})
+import { Connection, Pool } from 'pg'
 
+export async function connect(){
+if(global.connection){
+  return global.connection.connect();
+}
+ 
+const pool = new Pool({
+  connectionString: process.env.CONNECTION_STRING,
+});
 
-const client = await pool.connect()
-const res = await client.query('SELECT * FROM users WHERE id = $1', [1])
-console.log(res.rows[0])
+const client = await pool.connect();
+console.log("criou o pool de conexão")
+
+global.connection = pool;
+return pool.connect();
+console.log
+}
+
+export async function selectClientes(){
+  const client = await connect();
+  const res = await client.query("SELECT * FROM CLIENTE");
+  return res.rows;
+}
+
+export async function selectCliente(id){
+  const client = await connect();
+  const res = await client.query("SELECT * FROM CLIENTE WHERE ID_CLI=$1", [id]);
+  return res.rows;
+}
+
+connect();
